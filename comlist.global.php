@@ -22,11 +22,14 @@ require_once cot_incfile('page', 'module');
  * @param  string  $ajax_block DOM block ID for ajax pagination
  * @return string              Parsed HTML
  */
- 
-function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $condition = '', $area = 'page;polls', $cachetime = 3600, $pagination = '', $ajax_block = '')
-{
-	global $db, $db_pages, $db_users, $db_com, $db_polls, $cfg, $env, $structure, $cache, $usr, $lang, $id, $L, $sys;
 
+function comlist($tpl = 'comlis', $items = 0, $period = 120, $order = '', $condition = '', $area = 'page;polls', $cachetime = 3600, $pagination = '', $ajax_block = '')
+{
+	global $db, $lang, $id;
+
+	$db_com = cot::$db->com;
+	$db_polls = cot::$db->polls;
+	$db_pages = cot::$db->pages;
 	if (!empty($area))
 	{
 		$where_condition = " WHERE com_area IN ('".str_replace(";","','",$area)."') ";
@@ -41,14 +44,14 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 	{
 		$d = 0;
 	}
-	
-	$time_limit = ($period>0) ? " WHERE com_date > ". ($sys['now'] - $period * 86400) : '';
-	
+
+	$time_limit = ($period>0) ? " WHERE com_date > ". (cot::$sys['now'] - $period * 86400) : '';
+
 	// Display the items
 	$t = new XTemplate(cot_tplfile($tpl, 'plug'));
 	$join_columns = "";
 	$join_tables = "";
-	
+
 	if(!empty($where_condition) && !empty($condition))
 	{
 		$where_condition .= "AND $condition";
@@ -67,31 +70,31 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 
 	$sql_order = empty($order) ? '' : "ORDER BY $order";
 	$sql_limit = ($items > 0) ? "LIMIT $d, $items" : '';
-	
-	$cachvar = $tpl.'_'.$env['location'].'_'.$id.'_'.$lang.'_'.$pg.'_'.$usr['level'];
-			
-	if( $cachetime>0 && $cache && $cache->db->exists($cachvar, 'comlist'))
+
+	$cachvar = $tpl.'_'.cot::$env['location'].'_'.$id.'_'.$lang.'_'.$pg.'_'.cot::$usr['level'];
+
+	if( $cachetime>0 && cot::$cache && cot::$cache->db->exists($cachvar, 'comlist'))
 	{
-		$html_comlist = $cache->db->get($cachvar, 'comlist');
+		$html_comlist = cot::$cache->db->get($cachvar, 'comlist');
 	}
 	else
-	{	
+	{
 		if(!empty($pagination))
 		{
-			$total = $db->query("
+			$total = cot::$db->query("
 				SELECT * from $db_com c INNER JOIN
 					(SELECT MAX(com_id) AS com_id_max, com_area, com_code FROM $db_com $join_tables $time_limit
 					GROUP BY com_area, com_code) c_ ON c.com_id=c_.com_id_max
 				$where_condition
 			");
-			
+
 			$totalitems = $total->rowCount();
 		}
 		else
 		{
 			$totalitems = "";
 		}
-		
+
 		$res = $db->query("
 			SELECT * from $db_com c
 			INNER JOIN
@@ -104,7 +107,7 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 			$sql_limit
 			");
 
-		$jj = 1;			
+		$jj = 1;
 
 		while ($row = $res->fetch())
 		{
@@ -120,16 +123,16 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 				'COM_ROW_DATE_STAMP' => $row['com_date'],
 				'COM_ROW_POLL_TITLE' => htmlspecialchars($row['poll_text']),
 				'COM_ROW_POLL_ID' => $row['poll_id'],
-				'COM_ROW_TEXT' => strip_tags(preg_replace('/(<blockquote>.+?<\/blockquote>)/s','',$row['com_text'])), //вырезаем цитирование и тэги
+				'COM_ROW_TEXT' => strip_tags(preg_replace('/(<blockquote>.+?<\/blockquote>)/s','',$row['com_text'])), //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
 			));
-			
+
 			$row['user_id'] = $row['com_authorid'];
-			$row['user_name'] = $row['com_author'];			
+			$row['user_name'] = $row['com_author'];
 			$t->assign(cot_generate_usertags($row, "COM_ROW_OWNER_", htmlspecialchars($row['com_author']), false,false));
 
-			if ((($usr['id']>0 && $row['com_authorid']!=$usr['id']) || $usr['id']==0) && $usr['lastvisit']<$row['com_date'])
+			if (((cot::$usr['id']>0 && $row['com_authorid']!=cot::$usr['id']) || cot::$usr['id']==0) && cot::$usr['lastvisit']<$row['com_date'])
 			{
-				$t->assign('COM_ROW_NEW',$L['New']);
+				$t->assign('COM_ROW_NEW',cot::$L['New']);
 				$jn++;
 			}
 			else
@@ -143,19 +146,19 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 				include $pl;
 			}
 			/* ===== */
-			
+
 			$t->parse("MAIN.COM_ROW");
 
 			$jj++;
 		}
 
 		$t->assign('COMMENT_TOP_NEWCOUNT', $jn);
-		
+
 		if(!empty($pagination))
 		{
 			// Render pagination
-			$url_area = defined('COT_PLUG') ? 'plug' : $env['ext'];
-			
+			$url_area = defined('COT_PLUG') ? 'plug' : cot::$env['ext'];
+
 			if (defined('COT_LIST'))
 			{
 				global $list_url_path;
@@ -167,7 +170,7 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 				$url_params = empty($al) ? array('c' => $pag['page_cat'], 'id' => $id) :  array('c' => $pag['page_cat'], 'al' => $al);
 			}
 			elseif(defined('COT_USERS'))
-			{	
+			{
 				global $m;
 				$url_params = empty($m) ? array() :  array('m' => $m);
 			}
@@ -175,9 +178,9 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 			{
 				$url_params = array();
 			}
-			
+
 			$url_params[$pagination] = $durl;
-			
+
 			if(!empty($ajax_block)){
 				$ajax = true;
 				$ajax_plug = 'plug';
@@ -189,7 +192,7 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 				$ajax_plug_params = "";
 			}
 			$pagenav = cot_pagenav($url_area, $url_params, $d, $totalitems, $items, $pagination, '', $ajax, $ajax_block, $ajax_plug, $ajax_plug_params);
-			
+
 				$t->assign(array(
 				'PAGE_TOP_PAGINATION'  => $pagenav['main'],
 				'PAGE_TOP_PAGEPREV'    => $pagenav['prev'],
@@ -202,14 +205,14 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 				'PAGE_TOP_TOTALPAGES'  => $pagenav['total']
 			));
 		}
-				
+
 		/* === Hook === */
 		foreach (cot_getextplugins('comlist.tags') as $pl)
 		{
 			include $pl;
 		}
 		/* ===== */
-		
+
 		if($jj==1)
 		{
 			$t->parse("MAIN.NONE");
@@ -217,12 +220,12 @@ function comlist($tpl = 'msglist', $items = 0, $period = 120, $order = '', $cond
 
 		$t->parse();
 		$html_comlist = $t->text();
-	
-		if($cache && $cachetime>0)
+
+		if(cot::$cache && $cachetime>0)
 		{
-			$cache->db->store($cachvar, $html_comlist, 'comlist', $cachetime);
+			cot::$cache->db->store($cachvar, $html_comlist, 'comlist', $cachetime);
 		}
 	}
-	
+
 	return $html_comlist;
 }

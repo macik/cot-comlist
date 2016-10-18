@@ -24,4 +24,3 @@ echo comlist($tpl, $items, $period, $order, $condition, $area, $cachetime, $pagi
 ob_flush();
 exit;
 
-?>

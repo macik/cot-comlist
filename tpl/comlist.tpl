@@ -21,12 +21,12 @@
 			{COM_ROW_TEXT|(cot_cutstring($this,144)}</a>
 			<!-- ELSE -->
 			...............
-			<!-- ENDIF -->			
+			<!-- ENDIF -->
 		</div>
 
 		<p class="small">
 			<!-- IF {PHP|date('d.m.Y')} == {COM_ROW_DATE_STAMP|cot_date('d.m.Y',$this)} -->
-			<time datetime="{COM_ROW_DATE_STAMP|cot_date('d-m-Y\TH:i',$this)}" class="red"><strong>{PHP.skinlang.Today}</strong>,&nbsp;{COM_ROW_DATE_STAMP|cot_date('H:i',$this)}</time>
+			<time datetime="{COM_ROW_DATE_STAMP|cot_date('d-m-Y\TH:i',$this)}" class="red"><strong>{PHP.L.Today}</strong>,&nbsp;{COM_ROW_DATE_STAMP|cot_date('H:i',$this)}</time>
 			<!-- ELSE -->
 			<time datetime="{COM_ROW_DATE_STAMP|cot_date('d-m-Y\TH:i',$this)}" class="redd">{COM_ROW_DATE_STAMP|cot_date('d F',$this)},&nbsp;{COM_ROW_DATE_STAMP|cot_date('H:i',$this)}</time>
 			<!-- ENDIF -->&nbsp;
